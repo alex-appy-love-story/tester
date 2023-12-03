@@ -61,7 +61,6 @@ func TestSuccess(t *testing.T) {
 		Username: "Bob",
 		TokenID:  4,
 		Amount:   1,
-        FailTrigger: "order",
 	}); err != nil {
 		t.Errorf("Error: %+v", err)
 	}

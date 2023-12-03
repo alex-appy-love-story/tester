@@ -15,12 +15,12 @@ type OrderRequest struct {
 	Username string `json:"username"`
 	TokenID  uint   `json:"token_id"`
 	Amount   uint   `json:"amount"`
-    FailTrigger string
+    FailTrigger string `json:"fail_trigger"`
 }
 
 func RequestOrder(cfg Config, request *OrderRequest) error {
 	payloadBuf := new(bytes.Buffer)
-    url := fmt.Sprintf("http://%s/orders", cfg.BackendUrl)
+    url := fmt.Sprintf("%s/orders", cfg.BackendUrl)
 	json.NewEncoder(payloadBuf).Encode(request)
     req, _ := http.NewRequest("POST", url, payloadBuf)
 
