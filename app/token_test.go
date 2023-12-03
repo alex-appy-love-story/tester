@@ -125,7 +125,7 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
         return &order.Order{}, fmt.Errorf("%+v", err)
     }
 
-    time.Sleep(1 * time.Second)
+    time.Sleep(5 * time.Second)
 
     ord, err := FetchLatestOrder(*cfg)
 
