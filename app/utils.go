@@ -20,9 +20,9 @@ type OrderRequest struct {
 
 func RequestOrder(cfg Config, request *OrderRequest) error {
 	payloadBuf := new(bytes.Buffer)
-	url := fmt.Sprintf("%s/orders", cfg.BackendUrl)
+    url := fmt.Sprintf("http://%s/orders", cfg.BackendUrl)
 	json.NewEncoder(payloadBuf).Encode(request)
-	req, _ := http.NewRequest("POST", url, payloadBuf)
+    req, _ := http.NewRequest("POST", url, payloadBuf)
 
 	client := &http.Client{}
 	res, e := client.Do(req)
@@ -59,7 +59,7 @@ func SetInventory(db *gorm.DB, info []InventoryEntry) error {
 }
 
 func FetchLatestOrder(cfg Config) (*order.Order, error) {
-	requestURL := fmt.Sprintf("%s", cfg.OrderServiceUrl)
+    requestURL := fmt.Sprintf("http://%s", cfg.OrderServiceUrl)
 	resp, err := http.Get(requestURL)
 	if err != nil {
 		return nil, err
