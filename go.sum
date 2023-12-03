@@ -1,5 +1,7 @@
 github.com/alex-appy-love-story/db-lib v0.0.0-20231202032510-07961d9b579b h1:SaDxByDmNdcsz+YCrzHSixLFQv7Br+o4ewSfzgy8tjk=
 github.com/alex-appy-love-story/db-lib v0.0.0-20231202032510-07961d9b579b/go.mod h1:zVMmnrP7XQdVCvmtbFbilq4a+4uII0MUKkuQ+lnUPRE=
+github.com/alex-appy-love-story/db-lib v0.0.0-20231203143609-2200edfc3899 h1:rbIw47XH9ppLJO9Hn7gWRwLACAdBh63snNGNK/gx+iI=
+github.com/alex-appy-love-story/db-lib v0.0.0-20231203143609-2200edfc3899/go.mod h1:zVMmnrP7XQdVCvmtbFbilq4a+4uII0MUKkuQ+lnUPRE=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=

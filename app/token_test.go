@@ -72,6 +72,7 @@ func TestSuccess(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Error: %+v", err)
+        return
 	}
 
 	if ord.OrderStatus != order.SUCCESS {
@@ -88,8 +89,8 @@ func TestForceFail(t *testing.T) {
           t.Errorf("Error: " + err.Error())
           return
       }
-      if result.OrderStatus != order.FORCEFAIL {
-          t.Errorf("%s force fail test failed: %s", service)
+      if result.OrderStatus != order.FORCED_FAIL {
+          t.Errorf("%s failed the force fail test: returned %s", service, result.OrderStatus)
       }
     }
 }
