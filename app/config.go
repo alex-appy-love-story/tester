@@ -30,6 +30,7 @@ func LoadConfig() (*Config, error) {
 			User:     "user",
 			Password: "password",
 			Address:  "localhost:3306",
+            DatabaseName: "db_inventory",
 		},
 		BackendUrl:      "localhost:3000",
 		OrderServiceUrl: "localhost:5001",

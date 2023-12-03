@@ -61,6 +61,7 @@ func TestSuccess(t *testing.T) {
 		Username: "Bob",
 		TokenID:  4,
 		Amount:   1,
+        FailTrigger: "order",
 	}); err != nil {
 		t.Errorf("Error: %+v", err)
 	}
@@ -76,4 +77,60 @@ func TestSuccess(t *testing.T) {
 	if ord.OrderStatus != order.SUCCESS {
 		t.Errorf("Error: Order fail")
 	}
+}
+
+func TestForceFail(t *testing.T) {
+    services := []string{ "order", "payment", "inventory", "delivery" }
+      
+    for i, _ := range services {
+      result := forceFail(t, services[i])
+      if result != order.FAIL {
+        t.Errorf("%s force fail test failed", services[i])
+      }
+    }
+}
+
+func forceFail(t *testing.T, serviceToFail string) order.OrderStatus {
+	cfg, err := LoadConfig()
+
+	if err != nil {
+		t.Errorf("Error: Could not load config")
+	}
+
+    inventory := []InventoryEntry{
+        {
+            TokenID: 4,
+            Amount:  1,
+        },
+    }
+
+    if err := SetInventory(db, inventory); err != nil {
+        t.Errorf("Error: Failed to set inventory: %+v", err)
+        return order.FAIL
+    }
+
+    if err := RequestOrder(*cfg, &OrderRequest{
+        Username: "Bob",
+        TokenID:  4,
+        Amount:   1,
+        FailTrigger: serviceToFail,
+    }); err != nil {
+        t.Errorf("Error: %+v", err)
+        return order.FAIL
+    }
+
+    time.Sleep(1 * time.Second)
+
+    ord, err := FetchLatestOrder(*cfg)
+
+    if err != nil {
+        t.Errorf("Error: %+v", err)
+        return order.FAIL
+    }
+
+    if ord.OrderStatus != order.SUCCESS {
+        t.Errorf("Error: Order fail")
+        return order.FAIL
+    }
+    return order.SUCCESS
 }

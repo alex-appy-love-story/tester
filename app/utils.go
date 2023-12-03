@@ -15,6 +15,7 @@ type OrderRequest struct {
 	Username string `json:"username"`
 	TokenID  uint   `json:"token_id"`
 	Amount   uint   `json:"amount"`
+    FailTrigger string
 }
 
 func RequestOrder(cfg Config, request *OrderRequest) error {
