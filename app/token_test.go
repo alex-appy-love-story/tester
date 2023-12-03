@@ -82,19 +82,24 @@ func TestSuccess(t *testing.T) {
 func TestForceFail(t *testing.T) {
     services := []string{ "order", "payment", "inventory", "delivery" }
       
-    for i, _ := range services {
-      result := forceFail(t, services[i])
-      if result != order.FAIL {
-        t.Errorf("%s force fail test failed", services[i])
+    for _, service := range services {
+      result, err := forceFail(t, service)
+      if err != nil {
+          t.Errorf("Error: " + err.Error())
+          return
+      }
+      if result.OrderStatus != order.FORCEFAIL {
+          t.Errorf("%s force fail test failed: %s", service)
       }
     }
 }
 
-func forceFail(t *testing.T, serviceToFail string) order.OrderStatus {
+func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
 	cfg, err := LoadConfig()
 
 	if err != nil {
 		t.Errorf("Error: Could not load config")
+        return &order.Order{}, fmt.Errorf("Could not load config")
 	}
 
     inventory := []InventoryEntry{
@@ -106,7 +111,7 @@ func forceFail(t *testing.T, serviceToFail string) order.OrderStatus {
 
     if err := SetInventory(db, inventory); err != nil {
         t.Errorf("Error: Failed to set inventory: %+v", err)
-        return order.FAIL
+        return &order.Order{}, fmt.Errorf("Failed to set inventory: %+v", err)
     }
 
     if err := RequestOrder(*cfg, &OrderRequest{
@@ -116,7 +121,7 @@ func forceFail(t *testing.T, serviceToFail string) order.OrderStatus {
         FailTrigger: serviceToFail,
     }); err != nil {
         t.Errorf("Error: %+v", err)
-        return order.FAIL
+        return &order.Order{}, fmt.Errorf("%+v", err)
     }
 
     time.Sleep(1 * time.Second)
@@ -125,12 +130,8 @@ func forceFail(t *testing.T, serviceToFail string) order.OrderStatus {
 
     if err != nil {
         t.Errorf("Error: %+v", err)
-        return order.FAIL
+        return &order.Order{}, fmt.Errorf("%+v", err)
     }
 
-    if ord.OrderStatus != order.SUCCESS {
-        t.Errorf("Error: Order fail")
-        return order.FAIL
-    }
-    return order.SUCCESS
+    return ord, nil
 }
