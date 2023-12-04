@@ -41,9 +41,9 @@ func init() {
 
 func TestSuccess(t *testing.T) {
 	cfg, err := LoadConfig()
-
 	if err != nil {
 		t.Errorf("Error: Could not load config")
+        return
 	}
 
 	inventory := []InventoryEntry{
@@ -55,6 +55,7 @@ func TestSuccess(t *testing.T) {
 
 	if err := SetInventory(db, inventory); err != nil {
 		t.Errorf("Error: Failed to set inventory: %+v", err)
+        return
 	}
 
 	if err := RequestOrder(*cfg, &OrderRequest{
@@ -63,44 +64,187 @@ func TestSuccess(t *testing.T) {
 		Amount:   1,
 	}); err != nil {
 		t.Errorf("Error: %+v", err)
+        return
 	}
-
-	time.Sleep(1 * time.Second)
+    
+	time.Sleep(4 * time.Second)
 
 	ord, err := FetchLatestOrder(*cfg)
-
 	if err != nil {
 		t.Errorf("Error: %+v", err)
         return
 	}
 
 	if ord.OrderStatus != order.SUCCESS {
-		t.Errorf("Error: Order fail")
+        t.Errorf("Error: Order is not success, status is %s", ord.OrderStatus)
+        return
 	}
 }
 
-func TestForceFail(t *testing.T) {
-    services := []string{ "order", "payment", "inventory", "delivery" }
-      
-    for _, service := range services {
-      result, err := forceFail(t, service)
-      if err != nil {
-          t.Errorf("Error: " + err.Error())
-          return
-      }
-      if result.OrderStatus != order.FORCED_FAIL {
-          t.Errorf("%s failed the force fail test: returned %s", service, result.OrderStatus)
-      }
-    }
-}
 
-func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
+//
+// Testing all fail types: Out of stock, insufficienct funds, token not found
+//
+func TestOutOfStock(t *testing.T) {
 	cfg, err := LoadConfig()
 
 	if err != nil {
 		t.Errorf("Error: Could not load config")
-        return &order.Order{}, fmt.Errorf("Could not load config")
+        return
 	}
+
+    inventory := []InventoryEntry{
+        {
+            TokenID: 4,
+            Amount:  1,
+        },
+    }
+
+    if err := SetInventory(db, inventory); err != nil {
+        t.Errorf("Error: Failed to set inventory: %+v", err)
+        return
+    }
+
+    if err := RequestOrder(*cfg, &OrderRequest{
+        Username: "Boba",
+        TokenID:  4,
+        Amount:   42,
+    }); err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    time.Sleep(2 * time.Second)
+
+    ord, err := FetchLatestOrder(*cfg)
+
+    if err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    if ord.OrderStatus != order.INVENTORY_FAIL_STOCK {
+		t.Errorf("Error: Order did not fail correctly, status is %s, %d", ord.OrderStatus, ord.ID)
+        return
+	}
+}
+
+func TestInsufficientFunds(t *testing.T) {
+	cfg, err := LoadConfig()
+
+	if err != nil {
+		t.Errorf("Error: Could not load config")
+        return
+	}
+
+    inventory := []InventoryEntry{
+        {
+            TokenID: 4,
+            Amount:  30,
+        },
+    }
+
+    if err := SetInventory(db, inventory); err != nil {
+        t.Errorf("Error: Failed to set inventory: %+v", err)
+        return
+    }
+
+    if err := RequestOrder(*cfg, &OrderRequest{
+        Username: "Bobby",
+        TokenID:  4,
+        Amount:   90,
+    }); err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    time.Sleep(2 * time.Second)
+
+    ord, err := FetchLatestOrder(*cfg)
+
+    if err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    if ord.OrderStatus != order.PAYMENT_FAIL_INSUFFICIENT {
+		t.Errorf("Error: Order did not fail correctly, status is %s", ord.OrderStatus)
+        return
+	}
+}
+
+
+func TestTokenNotFound(t *testing.T) {
+	cfg, err := LoadConfig()
+
+	if err != nil {
+		t.Errorf("Error: Could not load config")
+        return
+	}
+
+    inventory := []InventoryEntry{
+        {
+            TokenID: 4,
+            Amount:  1,
+        },
+    }
+
+    if err := SetInventory(db, inventory); err != nil {
+        t.Errorf("Error: Failed to set inventory: %+v", err)
+        return
+    }
+
+    if err := RequestOrder(*cfg, &OrderRequest{
+        Username: "Bobi",
+        TokenID:  42,
+        Amount:   1,
+    }); err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    time.Sleep(3 * time.Second)
+
+    ord, err := FetchLatestOrder(*cfg)
+
+    if err != nil {
+        t.Errorf("Error: %+v", err)
+        return  
+    }
+
+    if ord.OrderStatus != order.PAYMENT_FAIL_TOKEN_NOT_FOUND {
+		t.Errorf("Error: Order did not fail correctly, status is %s", ord.OrderStatus)
+        return
+	}
+}
+
+
+//
+// Testing force fails
+//
+func TestForceFails(t *testing.T) {
+    services := []string{ "order", "payment", "inventory", "delivery" }
+
+    for _, service := range services {
+        result, err := forceFail(t, service)
+        if err != nil {
+            t.Errorf("Error: " + err.Error())
+            return
+        }
+        if result.OrderStatus != order.FORCED_FAIL {
+            t.Errorf("%s failed the force fail test: returned %s", service, result.OrderStatus)
+            return
+        }
+    }
+}
+
+func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
+    cfg, err := LoadConfig()
+
+    if err != nil {
+        t.Errorf("Error: Could not load config")
+        return &order.Order{}, fmt.Errorf("Could not load config")
+    }
 
     inventory := []InventoryEntry{
         {
@@ -115,7 +259,7 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
     }
 
     if err := RequestOrder(*cfg, &OrderRequest{
-        Username: "Bob",
+        Username: "Bobo",
         TokenID:  4,
         Amount:   1,
         FailTrigger: serviceToFail,
@@ -124,7 +268,7 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
         return &order.Order{}, fmt.Errorf("%+v", err)
     }
 
-    time.Sleep(5 * time.Second)
+    time.Sleep(3 * time.Second)
 
     ord, err := FetchLatestOrder(*cfg)
 
@@ -135,3 +279,4 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
 
     return ord, nil
 }
+
