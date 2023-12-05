@@ -32,7 +32,7 @@ func RequestOrder(cfg Config, request *OrderRequest) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Did not receive 200")
+        return fmt.Errorf("Did not receive 200, got %+v", res.StatusCode)
 	}
 
 	return nil

@@ -107,8 +107,8 @@ func TestOutOfStock(t *testing.T) {
 
     if err := RequestOrder(*cfg, &OrderRequest{
         Username: "Boba",
-        TokenID:  4,
-        Amount:   42,
+        TokenID:  1,
+        Amount:   2,
     }); err != nil {
         t.Errorf("Error: %+v", err)
         return  
