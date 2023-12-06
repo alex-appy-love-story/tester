@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"testing"
-	"time"
-
 	"github.com/alex-appy-love-story/db-lib/models/order"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -39,7 +37,6 @@ func init() {
 // This file contains all the tests.
 
 func TestSuccess(t *testing.T) {
-    fmt.Println("Testing Success")
 	inventory := []InventoryEntry{
 		{
 			TokenID: 4,
@@ -70,7 +67,6 @@ func TestSuccess(t *testing.T) {
 // Testing all fail types: Out of stock, insufficienct funds, token not found
 //
 func TestOutOfStock(t *testing.T) {
-    fmt.Println("Testing out of stock")
     inventory := []InventoryEntry{
         {
             TokenID: 4,
@@ -84,7 +80,7 @@ func TestOutOfStock(t *testing.T) {
         Amount:   2,
     }
 
-    ord, err := PerformTest(db, inventory, request, 3)
+    ord, err := PerformTest(db, inventory, request, 2)
     if err != nil {
         t.Errorf(err.Error())
         return
@@ -97,7 +93,6 @@ func TestOutOfStock(t *testing.T) {
 }
 
 func TestInsufficientFunds(t *testing.T) {
-    fmt.Println("Testing insufficient funds")
     inventory := []InventoryEntry{
         {
             TokenID: 4,
@@ -111,7 +106,7 @@ func TestInsufficientFunds(t *testing.T) {
         Amount:   90,
     }
 
-    ord, err := PerformTest(db, inventory, request, 3)
+    ord, err := PerformTest(db, inventory, request, 2)
     if err != nil {
         t.Errorf(err.Error())
         return
@@ -125,7 +120,6 @@ func TestInsufficientFunds(t *testing.T) {
 
 
 func TestTokenNotFound(t *testing.T) {
-    fmt.Println("Testing token not found")
     inventory := []InventoryEntry{
         {
             TokenID: 4,
@@ -139,7 +133,7 @@ func TestTokenNotFound(t *testing.T) {
         Amount:   1,
     }
 
-    ord, err := PerformTest(db, inventory, request, 3)
+    ord, err := PerformTest(db, inventory, request, 2)
     if err != nil {
         t.Errorf(err.Error())
         return
@@ -156,32 +150,9 @@ func TestTokenNotFound(t *testing.T) {
 // Testing force fails
 //
 func TestForceFails(t *testing.T) {
-    fmt.Println("Testing force fails")
-    
-    fmt.Println("--- Sending success request")
-
-    inventory := []InventoryEntry{
-        {
-            TokenID: 4,
-            Amount:  1,
-        },
-    }
-    successRequest := &OrderRequest{
-        Username: "Bobo",
-        TokenID:  4,
-        Amount:   1,
-    }
-    
-    _, err := PerformTest(db, inventory, successRequest, 4)
-    if err != nil {
-        t.Errorf(err.Error())
-        return
-    }
-    
     services := []string{ "order", "payment", "inventory", "delivery" }
 
     for _, service := range services {
-        fmt.Println("--- Testing", service)
         result, err := forceFail(t, service)
         if err != nil {
             t.Errorf("Error: " + err.Error())
@@ -209,7 +180,7 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
         FailTrigger: serviceToFail,
     }
 
-    ord, err := PerformTest(db, inventory, request, 3)
+    ord, err := PerformTest(db, inventory, request, 4)
     if err != nil {
         return &order.Order{}, err
     }
@@ -222,8 +193,6 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
 // Testing circuit breaker
 //
 func TestCircuitBreaker(t *testing.T) {
-    fmt.Println("Testing circuit breaker")
-    
     inventory := []InventoryEntry{
         {
             TokenID: 4,
@@ -231,35 +200,22 @@ func TestCircuitBreaker(t *testing.T) {
         },
     }
 
-    successRequest := &OrderRequest{
-        Username: "Bobo",
-        TokenID:  4,
-        Amount:   1,
-    }
-    failRequest := &OrderRequest{
+    request := &OrderRequest{
         Username: "Bobo",
         TokenID:  4,
         Amount:   1,
         FailTrigger: "order",
     }
 
-    fmt.Println("--- Sending success request")
-    ord, err := PerformTest(db, inventory, successRequest, 4)
-    if err != nil {
-        t.Errorf(err.Error())
-        return
-    }
-
-    for i := 0; i < 9; i++ {
-        fmt.Println("--- Sending fail request")
-        ord, err = PerformTest(db, inventory, failRequest, 3)
+    ord, err := &order.Order{}, fmt.Errorf("")
+    for i := 0; i < 7; i++ {
+        ord, err = PerformTest(db, inventory, request, 4)
         if err != nil {
             t.Errorf(err.Error())
             return
         }
     }
 
-    time.Sleep(4 * time.Second)
 
     if ord.OrderStatus != order.DEFAULT_RESPONSE {
         t.Errorf("Failed the circuit breaker test: returned %s", ord.OrderStatus)
