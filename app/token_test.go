@@ -240,7 +240,7 @@ func TestCircuitBreaker(t *testing.T) {
         Username: "Bobo",
         TokenID:  4,
         Amount:   1,
-        FailTrigger: "order",
+        FailTrigger: "payment",
     }
 
     fmt.Println("--- Sending success request")
