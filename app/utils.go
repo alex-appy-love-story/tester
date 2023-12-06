@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/alex-appy-love-story/db-lib/models/inventory"
 	"github.com/alex-appy-love-story/db-lib/models/order"
@@ -17,6 +18,36 @@ type OrderRequest struct {
 	Amount   uint   `json:"amount"`
     FailTrigger string `json:"fail_trigger"`
 }
+
+
+func PerformTest(db *gorm.DB, 
+                 inventory []InventoryEntry, 
+                 request *OrderRequest,
+                 timeout int) (*order.Order, error) {
+	
+	cfg, err := LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("Error: Could not load config")
+	}
+
+    if err := SetInventory(db, inventory); err != nil {
+		return nil, fmt.Errorf("Error: Failed to set inventory: %+v", err)
+	}
+
+	if err := RequestOrder(*cfg, request); err != nil {
+		return nil, fmt.Errorf("Error: %+v", err)
+	}
+    
+	time.Sleep(time.Duration(timeout) * time.Second)
+
+	ord, err := FetchLatestOrder(*cfg)
+	if err != nil {
+		return nil, fmt.Errorf("Error: %+v", err)
+	}
+
+    return ord, nil
+}
+
 
 func RequestOrder(cfg Config, request *OrderRequest) error {
 	payloadBuf := new(bytes.Buffer)
