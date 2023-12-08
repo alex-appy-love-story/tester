@@ -209,7 +209,7 @@ func forceFail(t *testing.T, serviceToFail string) (*order.Order, error) {
         FailTrigger: serviceToFail,
     }
 
-    ord, err := PerformTest(db, inventory, request, 3)
+    ord, err := PerformTest(db, inventory, request, 4)
     if err != nil {
         return &order.Order{}, err
     }
